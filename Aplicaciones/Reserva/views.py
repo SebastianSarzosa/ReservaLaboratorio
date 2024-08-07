@@ -109,6 +109,8 @@ def registrarLaboratorio(request):
         capacidad = request.POST.get('txtCapacidad')
         descripcion = request.POST.get('txtDescripcion', '')
         facultad_id = request.POST.get('selFacultad')
+        img = request.FILES.get('foto')
+
 
         if not nombre or not capacidad or not facultad_id:
             messages.error(request, 'Todos los campos son obligatorios.')
@@ -124,7 +126,8 @@ def registrarLaboratorio(request):
                         nombre=nombre,
                         capacidad=capacidad,
                         descripcion=descripcion,
-                        facultad=facultad
+                        facultad=facultad,
+                        foto = img
                     )
                     messages.success(request, '¡Laboratorio registrado con éxito!')
 

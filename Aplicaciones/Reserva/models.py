@@ -17,6 +17,8 @@ class Laboratorio(models.Model):
     capacidad = models.PositiveIntegerField()
     facultad = models.ForeignKey(Facultad, on_delete=models.CASCADE, related_name='laboratorios')
     descripcion = models.TextField(blank=True, null=True)
+    foto = models.FileField(upload_to='laboratorio', max_length=100, default="hola mundo")
+
 
     def __str__(self):
         return self.nombre
