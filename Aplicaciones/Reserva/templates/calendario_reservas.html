@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Calendario de Reservas{% endblock %}
+
+{% block body %}
+<div class="row mt-4">
+    <div class="col-md-8">
+        <h2>Calendario de Reservas</h2>
+        <div id="calendar"></div>
+    </div>
+    <div class="col-md-4">
+        <h2>Reservar Laboratorio</h2>
+        <form action="{% url 'agregarReserva' %}" method="POST" id="reservaForm">
+            {% csrf_token %}
+            <div class="form-group mb-3">
+                <label for="usuario" class="form-label">Nombre del Usuario</label>
+                <input type="text" id="usuario" name="usuario" class="form-control" placeholder="Nombre del Usuario" required>
+            </div>
+            <div class="form-group mb-3">
+                <label for="laboratorio" class="form-label">Laboratorio</label>
+                <select id="laboratorio" name="laboratorio" class="form-control" required>
+                    <option value="">Seleccione un Laboratorio</option>
+                    {% for laboratorio in laboratorios %}
+                    <option value="{{ laboratorio.id }}">{{ laboratorio.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group mb-3">
+                <label for="fecha" class="form-label">Fecha</label>
+                <input type="date" id="fecha" name="fecha" class="form-control" required>
+            </div>
+            <div class="form-group mb-3">
+                <label for="hora_inicio" class="form-label">Hora de Inicio</label>
+                <input type="time" id="hora_inicio" name="hora_inicio" class="form-control" required>
+            </div>
+            <div class="form-group mb-3">
+                <label for="hora_fin" class="form-label">Hora de Fin</label>
+                <input type="time" id="hora_fin" name="hora_fin" class="form-control" required>
+            </div>
+            <div class="form-group mb-3">
+                <label for="motivo" class="form-label">Motivo</label>
+                <textarea id="motivo" name="motivo" class="form-control" placeholder="Motivo de la Reserva" rows="3" required></textarea>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary btn-block">Reservar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            events: {% autoescape off %}{{ eventos|safe }}{% endautoescape %},
+            eventClick: function(info) {
+                Swal.fire({
+                    title: info.event.title,
+                    text: `Laboratorio: ${info.event.extendedProps.laboratorio}\nInicio: ${info.event.start}\nFin: ${info.event.end}`,
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Eliminar Reserva',
+                    cancelButtonText: 'Cerrar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(`/reservas/eliminar/${info.event.id}/`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                info.event.remove();  // Remover el evento del calendario
+                                Swal.fire('Eliminado', 'La reserva ha sido eliminada.', 'success');
+                            } else {
+                                Swal.fire('Error', 'No se pudo eliminar la reserva.', 'error');
+                            }
+                        });
+                    }
+                });
+            }
+        });
+
+        calendar.render();
+    });
+</script>
+{% endblock %}
+{% endblock %}

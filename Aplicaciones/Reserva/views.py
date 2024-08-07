@@ -1,6 +1,10 @@
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
-from .models import Facultad, Laboratorio
+from django.utils.dateparse import parse_date, parse_time
+
+from Aplicaciones import Reserva
+from .models import Facultad, Laboratorio,Reserva
 
 
 #Este es el modelo principal
@@ -173,3 +177,95 @@ def editarLaboratorio(request, laboratorio_id):
         'facultades': facultades
     }
     return render(request, 'editar_laboratorio.html', context)
+
+
+
+
+
+
+
+def calendario_reservas(request):
+    laboratorios = Laboratorio.objects.all()
+    reservas = Reserva.objects.all()
+
+    # Serializar reservas para enviarlas al cliente
+    eventos = [
+        {
+            'id': reserva.id,
+            'title': f"{reserva.usuario} ({reserva.motivo})",
+            'start': f"{reserva.fecha}T{reserva.hora_inicio}",
+            'end': f"{reserva.fecha}T{reserva.hora_fin}",
+            'laboratorio': reserva.laboratorio.nombre,
+        }
+        for reserva in reservas
+    ]
+
+    return render(request, 'calendario_reservas.html', {
+        'laboratorios': laboratorios,
+        'eventos': eventos,
+    })
+
+def agregar_reserva(request):
+    if request.method == 'POST':
+        usuario = request.POST.get('usuario')
+        laboratorio_id = request.POST.get('laboratorio')
+        fecha = parse_date(request.POST.get('fecha'))
+        hora_inicio = parse_time(request.POST.get('hora_inicio'))
+        hora_fin = parse_time(request.POST.get('hora_fin'))
+        motivo = request.POST.get('motivo')
+
+        if not usuario or not laboratorio_id or not fecha or not hora_inicio or not hora_fin or not motivo:
+            messages.error(request, 'Todos los campos son obligatorios.')
+            return redirect('calendarioReservas')
+
+        laboratorio = get_object_or_404(Laboratorio, id=laboratorio_id)
+
+        # Verificar conflictos de reserva
+        conflictos = Reserva.objects.filter(
+            laboratorio=laboratorio,
+            fecha=fecha,
+            hora_inicio__lt=hora_fin,
+            hora_fin__gt=hora_inicio
+        ).exists()
+
+        if conflictos:
+            messages.error(request, 'El laboratorio ya está reservado en este horario.')
+            return redirect('calendarioReservas')
+
+        Reserva.objects.create(
+            usuario=usuario,
+            laboratorio=laboratorio,
+            fecha=fecha,
+            hora_inicio=hora_inicio,
+            hora_fin=hora_fin,
+            motivo=motivo
+        )
+        messages.success(request, 'Reserva realizada con éxito.')
+        return redirect('calendarioReservas')
+
+    return redirect('calendarioReservas')
+
+def obtener_reservas(request):
+    reservas = Reserva.objects.all()
+
+    # Serializar reservas para enviarlas como JSON
+    eventos = [
+        {
+            'id': reserva.id,
+            'title': f"{reserva.usuario} ({reserva.motivo})",
+            'start': f"{reserva.fecha}T{reserva.hora_inicio}",
+            'end': f"{reserva.fecha}T{reserva.hora_fin}",
+            'laboratorio': reserva.laboratorio.nombre,
+        }
+        for reserva in reservas
+    ]
+    return JsonResponse(eventos, safe=False)
+
+
+
+def eliminar_reserva(request, id):
+    if request.method == 'DELETE':
+        reserva = get_object_or_404(Reserva, id=id)
+        reserva.delete()
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False}, status=400)
