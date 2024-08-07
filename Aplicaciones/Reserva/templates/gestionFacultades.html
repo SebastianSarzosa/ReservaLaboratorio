@@ -1,0 +1,77 @@
+{% extends "./base.html" %}
+
+{% block title %} Gestión de Facultades {% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-sm-12 col-md-6 col-lg-4 col-xl-4">
+        <h2>Gestión de Facultades</h2>
+        <div class="card">
+            <div class="card-body">
+                <form action="{% url 'registrarFacultad' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="form-group mb-3">
+                        <label for="txtNombre" class="form-label">Nombre de la Facultad</label>
+                        <input type="text" id="txtNombre" name="txtNombre" class="form-control" placeholder="Nombre de la Facultad" maxlength="255" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="txtDescripcion" class="form-label">Descripción (opcional)</label>
+                        <textarea id="txtDescripcion" name="txtDescripcion" class="form-control" placeholder="Descripción (opcional)" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-success btn-block text-white">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-12 col-md-6 col-lg-8 col-xl-8">
+        <h1>Listado de Facultades</h1>
+        <div class="table-responsive py-2">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th colspan="2">Opciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for facultad in facultades %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ facultad.nombre }}</td>
+                        <td>{{ facultad.descripcion }}</td>
+                        <td><a href="{% url 'editarFacultad' facultad.id%}" class="btn btn-info">Editar</a></td>
+                        <td><a href="{% url 'eliminarFacultad' facultad.id %}" class="btn btn-danger btnEliminacion">Eliminar</a></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No hay facultades registradas.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if messages %}
+            {% for message in messages %}
+                Swal.fire({
+                    icon: '{% if message.tags == "error" %}error{% else %}success{% endif %}',
+                    title: '{% if message.tags == "error" %}Error{% else %}Éxito{% endif %}',
+                    text: '{{ message }}',
+                    showConfirmButton: false,
+                    timer: 3000  // Tiempo en milisegundos
+                });
+            {% endfor %}
+        {% endif %}
+    });
+</script>
+{% endblock %}
+{% endblock %}
