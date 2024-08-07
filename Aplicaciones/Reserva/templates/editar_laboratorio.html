@@ -1,0 +1,60 @@
+{% extends "./base.html" %}
+
+{% block title %}Editar Laboratorio{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-sm-12 col-md-6 col-lg-4 col-xl-4">
+        <h2>Editar Laboratorio</h2>
+        <div class="card">
+            <div class="card-body">
+                <form action="{% url 'editarLaboratorio' laboratorio.id %}" method="POST">
+                    {% csrf_token %}
+                    <div class="form-group mb-3">
+                        <label for="txtNombre" class="form-label">Nombre del Laboratorio</label>
+                        <input type="text" id="txtNombre" name="txtNombre" class="form-control" placeholder="Nombre del Laboratorio" value="{{ laboratorio.nombre }}" maxlength="255" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="txtCapacidad" class="form-label">Capacidad</label>
+                        <input type="number" id="txtCapacidad" name="txtCapacidad" class="form-control" placeholder="Capacidad" value="{{ laboratorio.capacidad }}" min="1" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="selFacultad" class="form-label">Facultad</label>
+                        <select id="selFacultad" name="selFacultad" class="form-control" required>
+                            <option value="">Seleccione una Facultad</option>
+                            {% for facultad in facultades %}
+                            <option value="{{ facultad.id }}" {% if facultad.id == laboratorio.facultad.id %}selected{% endif %}>{{ facultad.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="txtDescripcion" class="form-label">Descripción (opcional)</label>
+                        <textarea id="txtDescripcion" name="txtDescripcion" class="form-control" placeholder="Descripción (opcional)" rows="3">{{ laboratorio.descripcion }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-success btn-block text-white">Actualizar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if messages %}
+            {% for message in messages %}
+                Swal.fire({
+                    icon: '{% if message.tags == "error" %}error{% else %}success{% endif %}',
+                    title: '{% if message.tags == "error" %}Error{% else %}Éxito{% endif %}',
+                    text: '{{ message }}',
+                    showConfirmButton: false,
+                    timer: 3000  // Tiempo en milisegundos
+                });
+            {% endfor %}
+        {% endif %}
+    });
+</script>
+{% endblock %}
+{% endblock %}
